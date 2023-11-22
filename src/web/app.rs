@@ -52,12 +52,11 @@ impl App {
         // Static Files
         let static_files_service = ServeDir::new("assets");
 
-        let app = Router::new()
-            .nest_service("/assets", static_files_service)
-            .merge(protected::router())
+        let app = protected::router()
             .route_layer(login_required!(Backend, login_url = "/login"))
             .merge(auth::router())
-            .layer(auth_service);
+            .layer(auth_service)
+            .nest_service("/assets", static_files_service);
 
         axum::Server::bind(&addr)
             .serve(app.into_make_service())
