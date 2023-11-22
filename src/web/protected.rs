@@ -9,6 +9,12 @@ struct ProtectedTemplate<'a> {
     username: &'a str,
 }
 
+#[derive(Template)]
+#[template(path = "index.html")]
+struct HomeTemplate<'a> {
+    username: &'a str,
+}
+
 pub fn router() -> Router<()> {
     Router::new().route("/", get(self::get::protected))
 }
@@ -27,4 +33,3 @@ mod get {
         }
     }
 }
-

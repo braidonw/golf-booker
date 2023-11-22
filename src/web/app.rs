@@ -1,19 +1,18 @@
-use std::net::SocketAddr;
-
-use axum::{error_handling::HandleErrorLayer, http::StatusCode, BoxError};
+use crate::{
+    users::Backend,
+    web::{auth, protected},
+};
+use axum::{error_handling::HandleErrorLayer, http::StatusCode, BoxError, Router};
 use axum_login::{
     login_required,
     tower_sessions::{Expiry, MemoryStore, SessionManagerLayer},
     AuthManagerLayerBuilder,
 };
 use sqlx::SqlitePool;
+use std::net::SocketAddr;
 use time::Duration;
 use tower::ServiceBuilder;
-
-use crate::{
-    users::Backend,
-    web::{auth, protected},
-};
+use tower_http::services::ServeDir;
 
 pub struct App {
     db: SqlitePool,
@@ -50,7 +49,12 @@ impl App {
             }))
             .layer(AuthManagerLayerBuilder::new(backend, session_layer).build());
 
-        let app = protected::router()
+        // Static Files
+        let static_files_service = ServeDir::new("assets");
+
+        let app = Router::new()
+            .nest_service("/assets", static_files_service)
+            .merge(protected::router())
             .route_layer(login_required!(Backend, login_url = "/login"))
             .merge(auth::router())
             .layer(auth_service);
