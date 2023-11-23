@@ -1,12 +1,6 @@
-//! Run with
-//!
-//! ```not_rust
-//! cargo run -p example-sqlite
-//! ```
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
-
 use crate::web::App;
-
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
+mod golf;
 mod users;
 mod web;
 

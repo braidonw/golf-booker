@@ -1,0 +1,84 @@
+{% extends "base.html" %} {% block content %}
+<header>
+  <div class="text-sm breadcrumbs">
+    <ul>
+      <li><a href="/">Home</a></li>
+      <li>
+        <a href="/events/{{ event.id }}">{{ event.name }} ({{ event.date }})</a>
+      </li>
+      <li>{{ section.name }}</li>
+    </ul>
+  </div>
+
+  <h1 class="text-xl font-black">Time: {{ group.time }}</h1>
+</header>
+
+<section>
+  <button
+    class="btn btn-primary"
+    hx-post="/events/{{ event.id }}/groups/{{ group.id }}/book"
+    hx-target="#booking-response"
+    hx-swap="innerHTML"
+  >
+    Book
+  </button>
+
+  <div id="booking-response"></div>
+</section>
+
+<div class="mt-12">
+  <dl class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
+    <div>
+      <dt>Holes</dt>
+      <dd>{{self::num_holes(group)}}</dd>
+    </div>
+
+    <div>
+      <dt>Visitors Accepted</dt>
+      <dd>{{ group.visitor_accepted }}</dd>
+    </div>
+
+    <div>
+      <dt>Members Accepted</dt>
+      <dd>{{ group.member_accepted }}</dd>
+    </div>
+
+    <div>
+      <dt>Public Members Accepted</dt>
+      <dd>{{ group.public_member_accepted }}</dd>
+    </div>
+
+    <div>
+      <dt>Handicap Required</dt>
+      <dd>{{ group.require_handicap }}</dd>
+    </div>
+  </dl>
+</div>
+
+<section class="mt-12">
+  <h2 class="text-lg font-black">Booking Entries</h2>
+  <table class="table table-xs" id="#booking-entries-table">
+    <thead>
+      <tr>
+        <th></th>
+        <th>Player</th>
+        <th>Handicap</th>
+        <th>Membership Number</th>
+        <th>Golf Link Number</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for entry in group.booking_entries.entries %}
+      <tr>
+        <th>{{ entry.index }}</th>
+        <td>{{ entry.person_name }}</td>
+        <td>{{ entry.handicap }}</td>
+        <td>{{ entry.membership_number }}</td>
+        <td>{{ entry.golf_link_no }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+{% endblock content %}

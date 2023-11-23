@@ -6,7 +6,42 @@
     </ul>
   </div>
 
-  <h1>Event {{event_id}}</h1>
+  <h1>Event {{ event.name }}</h1>
 </header>
+  
+<section>
+  {% for section in event.booking_sections.sections %}
+  <h3 class="text-lg font-bold">{{ section.name }}</h3>
+  <table class="table table-xs">
+    <thead>
+      <tr>
+        <th>Time</th>
+        <th>Status</th>
+        <th>Holes</th>
+        <th>Entries</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% match section.booking_groups.groups %}
+        {% when Some with (groups) %}
+          {% for group in groups %}
+          <tr>
+            <td>{{ group.time }}</td>
+            <td>{{ group.active }}</td>
+            <td>{{ self::num_holes(group) }}</td>
+            <td>{{ self::num_entries(group) }}</td>
+            <td>
+              <a href="/events/{{ event.id }}/booking_groups/{{ group.id }}" class="btn btn-outline btn-xs">View</a>
+            </td>
+          </tr>
+          {% endfor %}
+        {% when None %}
+      {% endmatch %}
+    </tbody>
+  </table>
+
+  {% endfor %}
+</section>
 
 {% endblock %}
