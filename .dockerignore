@@ -1,0 +1,8 @@
+# flyctl launch added from .gitignore
+target
+**/.env
+
+**/golf.db
+**/golf.db-shm
+**/golf.db-wal
+fly.toml

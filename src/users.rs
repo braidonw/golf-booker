@@ -11,6 +11,14 @@ pub struct User {
     password: String,
 }
 
+pub async fn do_users_exist(db: &SqlitePool) -> anyhow::Result<bool> {
+    let user_count: i64 = sqlx::query_scalar("select count(*) from users")
+        .fetch_one(db)
+        .await?;
+
+    Ok(user_count > 0)
+}
+
 pub async fn seed_from_environment(db: &SqlitePool) -> anyhow::Result<()> {
     let username = std::env::var("GC_USERNAME").expect("GC_USERNAME not set");
     let password = std::env::var("GC_PASSWORD").expect("GC_PASSWORD not set");

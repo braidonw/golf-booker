@@ -33,7 +33,11 @@ impl App {
         let db_filename = "golf.db";
         let db = SqlitePool::connect(db_filename).await?;
         sqlx::migrate!().run(&db).await?;
-        users::seed_from_environment(&db).await?;
+
+        // If no users exist, seed from environment
+        if !users::do_users_exist(&db).await? {
+            users::seed_from_environment(&db).await?;
+        }
 
         // Golf client to interact with the club website
         let base_path = std::env::var("GOLF_BASE_PATH").expect("GOLF_BASE_PATH not set");
@@ -43,7 +47,12 @@ impl App {
     }
 
     pub async fn serve(self) -> Result<(), Box<dyn std::error::Error>> {
-        let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
+        let port = std::env::var("PORT")
+            .unwrap_or_else(|_| "3000".to_string())
+            .parse()?;
+
+        dbg!(&port);
+        let addr = SocketAddr::from(([0, 0, 0, 0], port));
 
         // Session layer.
         //
