@@ -1,7 +1,7 @@
 use super::{event, event_group};
 use crate::{
     golf,
-    users::Backend,
+    users::{self, Backend},
     web::{auth, protected},
 };
 use axum::Router;
@@ -30,8 +30,10 @@ pub struct AppState {
 
 impl App {
     pub async fn new() -> Result<Self, Box<dyn std::error::Error>> {
-        let db = SqlitePool::connect(":memory:").await?;
+        let db_filename = "golf.db";
+        let db = SqlitePool::connect(db_filename).await?;
         sqlx::migrate!().run(&db).await?;
+        users::seed_from_environment(&db).await?;
 
         // Golf client to interact with the club website
         let base_path = std::env::var("GOLF_BASE_PATH").expect("GOLF_BASE_PATH not set");

@@ -11,6 +11,23 @@ pub struct User {
     password: String,
 }
 
+pub async fn seed_from_environment(db: &SqlitePool) -> anyhow::Result<()> {
+    let username = std::env::var("GC_USERNAME").expect("GC_USERNAME not set");
+    let password = std::env::var("GC_PASSWORD").expect("GC_PASSWORD not set");
+    let hashed_password = password_auth::generate_hash(password);
+
+    sqlx::query!(
+        "insert into users (id, username, password) values (?, ?, ?)",
+        1,
+        username,
+        hashed_password,
+    )
+    .execute(db)
+    .await?;
+
+    Ok(())
+}
+
 // Here we've implemented `Debug` manually to avoid accidentally logging the
 // password hash.
 impl std::fmt::Debug for User {

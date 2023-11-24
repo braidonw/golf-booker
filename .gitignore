@@ -1,2 +1,6 @@
 /target
 .env
+
+golf.db
+golf.db-shm
+golf.db-wal
