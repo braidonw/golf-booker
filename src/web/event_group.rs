@@ -1,47 +1,38 @@
+use super::app::AppState;
 use axum::{routing::get, Router};
+use std::sync::Arc;
 
-pub fn router() -> Router<()> {
-    Router::new().route(
-        "/events/:event_id/booking_groups/:group_id",
-        get(self::get::event_group),
-    )
+pub fn router(state: Arc<AppState>) -> Router {
+    Router::new()
+        .route("/events/:event_id/groups/:group_id", get(self::get::group))
+        .with_state(state.clone())
 }
 
 mod get {
-    use crate::golf::{BookingEvent, BookingGroup, BookingSection, GolfClient};
-    use askama::Template;
-    use askama_axum::IntoResponse;
-    use axum::{extract::Path, Extension};
+    use crate::{golf::BookingEvent, web::app::AppState};
+    use axum::{
+        extract::{Path, State},
+        response::Html,
+    };
     use std::sync::Arc;
 
-    fn num_holes<'a>(group: &BookingGroup) -> &'a str {
-        match group.holes() {
-            Some(9) => "9",
-            Some(18) => "18",
-            _ => "Unknown",
-        }
-    }
-
-    fn num_entries(group: &BookingGroup) -> usize {
-        group.booking_entries.entries.len()
-    }
-
-    #[derive(Template)]
-    #[template(path = "event_group.html")]
-    struct EventGroupTemplate {
-        event: BookingEvent,
-        section: BookingSection,
-        group: BookingGroup,
-    }
-
-    pub fn event_group(
-        golf_client: Extension<Arc<GolfClient>>,
+    pub async fn group(
         Path((event_id, group_id)): Path<(u32, u32)>,
-    ) -> impl IntoResponse {
-        if let Ok(event) = golf_client.get_event(event_id).await {
-            if let Some((group, section)) = event.get_booking_group(group_id) {}
-        }
+        state: State<Arc<AppState>>,
+    ) -> Html<String> {
+        let event: BookingEvent = state.golf_client.get_event(event_id).await.unwrap();
+        let (group, section) = event.get_booking_group(group_id).unwrap();
 
-        "Error finding event".into_response()
+        let mut ctx = tera::Context::new();
+        ctx.insert("group", &group);
+        ctx.insert("section", &section);
+        ctx.insert("event", &event);
+
+        let template = state
+            .tera
+            .render("group.html", &ctx)
+            .expect("Failed to render group.html");
+
+        Html(template)
     }
 }

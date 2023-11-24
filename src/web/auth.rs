@@ -31,7 +31,7 @@ pub fn router() -> Router<()> {
         .route("/logout", get(self::get::logout))
 }
 
-mod post {
+pub mod post {
     use super::*;
 
     pub async fn login(
@@ -63,13 +63,18 @@ mod post {
 }
 
 mod get {
+    use axum::Extension;
+    use tera::Tera;
+
     use super::*;
 
-    pub async fn login(Query(NextUrl { next }): Query<NextUrl>) -> LoginTemplate {
-        LoginTemplate {
-            message: None,
-            next,
-        }
+    pub async fn login(
+        Query(NextUrl { next }): Query<NextUrl>,
+        tera: Extension<Tera>,
+    ) -> impl IntoResponse {
+        let mut ctx = tera::Context::new();
+        ctx.insert("next", &next);
+        tera.render("login.html", &ctx).unwrap()
     }
 
     pub async fn logout(mut auth_session: AuthSession) -> impl IntoResponse {

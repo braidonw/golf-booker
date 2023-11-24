@@ -1,9 +1,11 @@
+use super::{event, event_group};
 use crate::{
     golf,
     users::Backend,
     web::{auth, protected},
 };
-use axum::{error_handling::HandleErrorLayer, http::StatusCode, BoxError, Extension};
+use axum::Router;
+use axum::{error_handling::HandleErrorLayer, http::StatusCode, BoxError};
 use axum_login::{
     login_required,
     tower_sessions::{Expiry, MemoryStore, SessionManagerLayer},
@@ -16,11 +18,16 @@ use time::Duration;
 use tower::ServiceBuilder;
 use tower_http::services::ServeDir;
 
-use super::event;
-
 pub struct App {
     db: SqlitePool,
     golf_client: golf::GolfClient,
+    tera: tera::Tera,
+}
+
+pub struct AppState {
+    pub golf_client: golf::GolfClient,
+    pub tera: tera::Tera,
+    pub db: SqlitePool,
 }
 
 impl App {
@@ -32,7 +39,14 @@ impl App {
         let base_path = std::env::var("GOLF_BASE_PATH").expect("GOLF_BASE_PATH not set");
         let golf_client = golf::GolfClient::new(&base_path, &db);
 
-        Ok(Self { db, golf_client })
+        // Tera
+        let tera = tera::Tera::new("templates/**/*")?;
+
+        Ok(Self {
+            db,
+            golf_client,
+            tera,
+        })
     }
 
     pub async fn serve(self) -> Result<(), Box<dyn std::error::Error>> {
@@ -51,7 +65,9 @@ impl App {
         //
         // This combines the session layer with our backend to establish the auth
         // service which will provide the auth session as a request extension.
-        let backend = Backend::new(self.db);
+
+        // TODO: Should try and figure out how to use the same backend as the session
+        let backend = Backend::new(self.db.clone());
         let auth_service = ServiceBuilder::new()
             .layer(HandleErrorLayer::new(|_: BoxError| async {
                 StatusCode::BAD_REQUEST
@@ -62,15 +78,25 @@ impl App {
         let static_files_service = ServeDir::new("assets");
 
         // GolfClient
-        let golf_client = Arc::new(self.golf_client);
+        let golf_client = self.golf_client;
 
-        let app = protected::router()
-            .merge(event::router())
+        // Tera
+        let tera = self.tera;
+
+        let state = Arc::new(AppState {
+            golf_client,
+            tera,
+            db: self.db,
+        });
+
+        let app = Router::new()
+            .merge(protected::router(state.clone()))
+            .merge(event::router(state.clone()))
+            .merge(event_group::router(state.clone()))
             .route_layer(login_required!(Backend, login_url = "/login"))
             .merge(auth::router())
             .layer(auth_service)
-            .nest_service("/assets", static_files_service)
-            .layer(Extension(golf_client));
+            .nest_service("/assets", static_files_service);
 
         axum::Server::bind(&addr)
             .serve(app.into_make_service())

@@ -1,14 +1,21 @@
+use super::app::AppState;
 use axum::{routing::get, Router};
+use std::sync::Arc;
 
-pub fn router() -> Router<()> {
-    Router::new().route("/events/:id", get(self::get::event))
+pub fn router(state: Arc<AppState>) -> Router {
+    Router::new()
+        .route("/events/:id", get(self::get::event))
+        .with_state(state.clone())
 }
 
 mod get {
-    use crate::golf::{BookingEvent, BookingGroup, GolfClient};
+    use crate::{
+        golf::{BookingEvent, BookingGroup},
+        web::app::AppState,
+    };
     use askama::Template;
     use askama_axum::IntoResponse;
-    use axum::{extract::Path, Extension};
+    use axum::extract::{Path, State};
     use std::sync::Arc;
 
     #[derive(Template)]
@@ -30,10 +37,10 @@ mod get {
     }
 
     pub async fn event(
-        golf_client: Extension<Arc<GolfClient>>,
+        state: State<Arc<AppState>>,
         Path(event_id): Path<u32>,
     ) -> impl IntoResponse {
-        if let Ok(event) = golf_client.get_event(event_id).await {
+        if let Ok(event) = state.golf_client.get_event(event_id).await {
             return EventTemplate { event }.into_response();
         }
 

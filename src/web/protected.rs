@@ -1,28 +1,37 @@
 use crate::users::AuthSession;
-use askama::Template;
-use axum::{http::StatusCode, response::IntoResponse, routing::get, Router};
+use axum::{http::StatusCode, routing::get, Router};
+use std::sync::Arc;
 
-#[derive(Template)]
-#[template(path = "index.html")]
-struct HomeTemplate<'a> {
-    username: &'a str,
+use super::app::AppState;
+
+pub fn router(state: Arc<AppState>) -> Router {
+    Router::new()
+        .route("/", get(self::get::index))
+        .with_state(state.clone())
 }
 
-pub fn router() -> Router<()> {
-    Router::new().route("/", get(self::get::index))
-}
+pub mod get {
+    use axum::{extract::State, response::Html};
 
-mod get {
     use super::*;
 
-    pub async fn index(auth_session: AuthSession) -> impl IntoResponse {
+    pub async fn index(
+        State(state): State<Arc<AppState>>,
+        auth_session: AuthSession,
+    ) -> Html<String> {
         match auth_session.user {
-            Some(user) => HomeTemplate {
-                username: &user.username,
-            }
-            .into_response(),
+            Some(user) => {
+                let mut ctx = tera::Context::new();
+                ctx.insert("username", &user.username);
+                let template = state
+                    .tera
+                    .render("index.html", &ctx)
+                    .expect("Failed to render index.html");
 
-            None => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+                Html(template)
+            }
+
+            None => Html(StatusCode::INTERNAL_SERVER_ERROR.to_string()),
         }
     }
 }

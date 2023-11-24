@@ -1,6 +1,6 @@
-mod booking_event;
+pub mod booking_event;
 pub mod booking_group;
-mod event;
+pub mod event;
 
 pub use booking_event::BookingEvent;
 pub use booking_event::BookingSection;
