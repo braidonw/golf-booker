@@ -1,11 +1,12 @@
 #![allow(dead_code)]
 
+use chrono::Days;
 use reqwest::Client;
 use reqwest_cookie_store::CookieStoreMutex;
 use sqlx::SqlitePool;
 use std::sync::Arc;
 
-use super::BookingEvent;
+use super::{BookingEvent, GolfEvent};
 
 const DATE_FROM: &str = "11-11-2023";
 const DATE_TO: &str = "20-12-2023";
@@ -42,6 +43,19 @@ impl GolfClient {
         let res = self.http_client.get(&url).send().await?.text().await?;
         let event: BookingEvent = quick_xml::de::from_str(&res)?;
         Ok(event)
+    }
+
+    pub async fn get_events(&self) -> anyhow::Result<Vec<GolfEvent>> {
+        let url = format!(
+            "{}/spring/bookings/events/between/{}/{}/3000000",
+            self.base_url,
+            current_date(),
+            to_date()
+        );
+        let res = self.http_client.get(&url).send().await?.text().await?;
+        let events: Vec<GolfEvent> = serde_json::from_str(&res)?;
+
+        Ok(events)
     }
 }
 
@@ -120,12 +134,52 @@ mod booking {
         }
     }
 
+    #[derive(Debug, serde::Deserialize, serde::Serialize)]
+    struct BookingErrorResponse {
+        #[serde(rename(deserialize = "Error"))]
+        error: Vec<BookingError>,
+    }
+
+    #[derive(Debug, serde::Deserialize, serde::Serialize)]
+    struct BookingError {
+        #[serde(rename(deserialize = "ErrorText"))]
+        error_text: String,
+    }
+
     impl GolfClient {
         pub(crate) async fn book(&self, booking_group_id: u32) -> anyhow::Result<()> {
             let params = BookingParams::new(booking_group_id);
             let url = format!("{}{}", self.base_url, AJAX_PATH);
-            self.http_client.post(&url).form(&params).send().await?;
-            todo!()
+            let res = self.http_client.post(&url).form(&params).send().await?;
+            let response_text = res.text().await?;
+            match quick_xml::de::from_str::<BookingErrorResponse>(&response_text) {
+                Ok(response) => {
+                    dbg!(&response);
+                    let error_message = response
+                        .error
+                        .into_iter()
+                        .map(|e| e.error_text)
+                        .collect::<Vec<String>>();
+
+                    Err(anyhow::anyhow!(error_message.join(", ")))
+                }
+                Err(_) => {
+                    dbg!(&response_text);
+                    Ok(())
+                }
+            }
         }
     }
+}
+
+fn current_date() -> String {
+    chrono::Local::now().format("%d-%m-%Y").to_string()
+}
+
+fn to_date() -> String {
+    chrono::Local::now()
+        .checked_add_days(Days::new(60))
+        .expect("Failed to add days")
+        .format("%d-%m-%Y")
+        .to_string()
 }

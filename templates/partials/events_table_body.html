@@ -1,0 +1,20 @@
+<tbody id="events-table-body">
+  {% for event in events %}
+  <tr>
+    <th>{{ self::format_date(event.event_date) }}</th>
+    <td>
+      <a href="/events/{{ event.id }}">{{ event.title }}</a>
+    </td>
+    <td>{{ self::status_code(event) }}</td>
+    <td>{{ event.availability }}</td>
+    <td>
+      {% if let Some(competition) = event.has_competition %} {{ competition }}{%
+      endif %}
+    </td>
+    <td>{{ event.is_open }}</td>
+    <td>{{ event.is_matchplay }}</td>
+    <td><a class="btn btn-xs" href="/events/{{ event.id }}">View</a></td>
+  </tr>
+
+  {% endfor %}
+</tbody>

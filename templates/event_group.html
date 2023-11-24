@@ -14,16 +14,20 @@
 </header>
 
 <section>
-  <button
-    class="btn btn-primary"
-    hx-post="/events/{{ event.id }}/groups/{{ group.id }}/book"
-    hx-target="#booking-response"
-    hx-swap="innerHTML"
-  >
-    Book
-  </button>
+  <form method="post" action="">
+    <button
+      class="btn btn-primary"
+      name="book-group-button"
+    >
+      Book
+    </button>
+  </form>
 
-  <div id="booking-response"></div>
+  <div id="booking-response">
+    {% if let Some(message) = booking_message %}
+    <p>{{ message }}</p>
+    {% endif %}
+  </div>
 </section>
 
 <div class="mt-12">

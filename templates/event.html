@@ -1,12 +1,12 @@
 {% extends "base.html" %} {% block content %}
 <header>
-  <div class="breadcrumbs">
+  <div class="text-sm breadcrumbs">
     <ul>
       <li><a href="/">Home</a></li>
     </ul>
   </div>
 
-  <h1>Event {{ event.name }}</h1>
+  <h1 class="text-xl font-black">{{ event.name }} ({{ self::format_date(event.date)}})</h1>
 </header>
   
 <section>

@@ -16,6 +16,7 @@ mod get {
     use askama::Template;
     use askama_axum::IntoResponse;
     use axum::extract::{Path, State};
+    use chrono::NaiveDateTime;
     use std::sync::Arc;
 
     #[derive(Template)]
@@ -34,6 +35,10 @@ mod get {
 
     fn num_entries(group: &BookingGroup) -> usize {
         group.booking_entries.entries.len()
+    }
+
+    pub fn format_date(date: &NaiveDateTime) -> String {
+        date.format("%d/%m/%Y").to_string()
     }
 
     pub async fn event(
