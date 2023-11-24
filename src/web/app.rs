@@ -21,12 +21,10 @@ use tower_http::services::ServeDir;
 pub struct App {
     db: SqlitePool,
     golf_client: golf::GolfClient,
-    tera: tera::Tera,
 }
 
 pub struct AppState {
     pub golf_client: golf::GolfClient,
-    pub tera: tera::Tera,
     pub db: SqlitePool,
 }
 
@@ -39,14 +37,7 @@ impl App {
         let base_path = std::env::var("GOLF_BASE_PATH").expect("GOLF_BASE_PATH not set");
         let golf_client = golf::GolfClient::new(&base_path, &db);
 
-        // Tera
-        let tera = tera::Tera::new("templates/**/*")?;
-
-        Ok(Self {
-            db,
-            golf_client,
-            tera,
-        })
+        Ok(Self { db, golf_client })
     }
 
     pub async fn serve(self) -> Result<(), Box<dyn std::error::Error>> {
@@ -80,12 +71,8 @@ impl App {
         // GolfClient
         let golf_client = self.golf_client;
 
-        // Tera
-        let tera = self.tera;
-
         let state = Arc::new(AppState {
             golf_client,
-            tera,
             db: self.db,
         });
 

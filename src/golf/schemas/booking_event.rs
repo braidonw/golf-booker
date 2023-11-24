@@ -1,3 +1,4 @@
+use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 
 use super::booking_group::{BookingGroup, BookingGroups};
@@ -6,7 +7,7 @@ pub struct BookingEvent {
     pub active: bool,
     pub id: u32,
     #[serde(rename(deserialize = "Date"))]
-    pub date: String,
+    pub date: NaiveDateTime,
     #[serde(rename(deserialize = "Name"))]
     pub name: String,
     #[serde(rename(deserialize = "lastModified"))]

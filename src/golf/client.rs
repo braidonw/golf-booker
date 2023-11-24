@@ -129,8 +129,3 @@ mod booking {
         }
     }
 }
-
-#[cfg(test)]
-mod test {
-    use super::*;
-}

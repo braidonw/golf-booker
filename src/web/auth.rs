@@ -63,18 +63,15 @@ pub mod post {
 }
 
 mod get {
-    use axum::Extension;
-    use tera::Tera;
 
     use super::*;
 
-    pub async fn login(
-        Query(NextUrl { next }): Query<NextUrl>,
-        tera: Extension<Tera>,
-    ) -> impl IntoResponse {
-        let mut ctx = tera::Context::new();
-        ctx.insert("next", &next);
-        tera.render("login.html", &ctx).unwrap()
+    pub async fn login(Query(NextUrl { next }): Query<NextUrl>) -> impl IntoResponse {
+        LoginTemplate {
+            message: None,
+            next,
+        }
+        .into_response()
     }
 
     pub async fn logout(mut auth_session: AuthSession) -> impl IntoResponse {

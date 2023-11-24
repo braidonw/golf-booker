@@ -4,35 +4,56 @@ use std::sync::Arc;
 
 pub fn router(state: Arc<AppState>) -> Router {
     Router::new()
-        .route("/events/:event_id/groups/:group_id", get(self::get::group))
+        .route(
+            "/events/:event_id/booking_groups/:group_id",
+            get(self::get::group),
+        )
         .with_state(state.clone())
 }
 
 mod get {
-    use crate::{golf::BookingEvent, web::app::AppState};
-    use axum::{
-        extract::{Path, State},
-        response::Html,
+    use crate::{
+        golf::{BookingEvent, BookingGroup, BookingSection},
+        web::app::AppState,
     };
+    use askama::Template;
+    use askama_axum::IntoResponse;
+    use axum::extract::{Path, State};
     use std::sync::Arc;
+
+    #[derive(Template)]
+    #[template(path = "event_group.html")]
+    pub struct BookingGroupTemplate<'a> {
+        event: &'a BookingEvent,
+        section: &'a BookingSection,
+        group: &'a BookingGroup,
+    }
+
+    pub fn format_date(date: &chrono::NaiveDateTime) -> String {
+        date.format("%Y-%m-%d %H:%M:%S").to_string()
+    }
 
     pub async fn group(
         Path((event_id, group_id)): Path<(u32, u32)>,
         state: State<Arc<AppState>>,
-    ) -> Html<String> {
-        let event: BookingEvent = state.golf_client.get_event(event_id).await.unwrap();
-        let (group, section) = event.get_booking_group(group_id).unwrap();
+    ) -> impl IntoResponse {
+        let event = &state
+            .golf_client
+            .get_event(event_id)
+            .await
+            .expect("Error finding event");
 
-        let mut ctx = tera::Context::new();
-        ctx.insert("group", &group);
-        ctx.insert("section", &section);
-        ctx.insert("event", &event);
+        let (group, section) = &event
+            .get_booking_group(group_id)
+            .expect("Error finding group");
 
-        let template = state
-            .tera
-            .render("group.html", &ctx)
-            .expect("Failed to render group.html");
+        dbg!(&group);
 
-        Html(template)
+        BookingGroupTemplate {
+            event,
+            section,
+            group,
+        }
+        .into_response()
     }
 }

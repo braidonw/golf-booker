@@ -5,7 +5,7 @@ create table if not exists events (
   date text,
   name text,
   event_date text,
-  event_status_code: integer,
+  event_status_code integer,
   event_status_code_friendly text,
   title text not null,
   is_lottery integer,
@@ -21,7 +21,4 @@ create table if not exists events (
   is_results integer,
   is_matchplay integer
 );
-
-create table if not exists event_section (
-)
 

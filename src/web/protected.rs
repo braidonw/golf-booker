@@ -4,34 +4,30 @@ use std::sync::Arc;
 
 use super::app::AppState;
 
-pub fn router(state: Arc<AppState>) -> Router {
-    Router::new()
-        .route("/", get(self::get::index))
-        .with_state(state.clone())
+pub fn router(_state: Arc<AppState>) -> Router {
+    Router::new().route("/", get(self::get::index))
 }
 
 pub mod get {
-    use axum::{extract::State, response::Html};
+    use askama::Template;
+    use askama_axum::IntoResponse;
 
     use super::*;
 
-    pub async fn index(
-        State(state): State<Arc<AppState>>,
-        auth_session: AuthSession,
-    ) -> Html<String> {
+    #[derive(Template)]
+    #[template(path = "index.html")]
+    struct EventTemplate<'a> {
+        username: &'a str,
+    }
+
+    pub async fn index(auth_session: AuthSession) -> impl IntoResponse {
         match auth_session.user {
-            Some(user) => {
-                let mut ctx = tera::Context::new();
-                ctx.insert("username", &user.username);
-                let template = state
-                    .tera
-                    .render("index.html", &ctx)
-                    .expect("Failed to render index.html");
-
-                Html(template)
+            Some(user) => EventTemplate {
+                username: &user.username,
             }
+            .into_response(),
 
-            None => Html(StatusCode::INTERNAL_SERVER_ERROR.to_string()),
+            None => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
         }
     }
 }

@@ -4,7 +4,7 @@
     <ul>
       <li><a href="/">Home</a></li>
       <li>
-        <a href="/events/{{ event.id }}">{{ event.name }} ({{ event.date }})</a>
+        <a href="/events/{{ event.id }}">{{ event.name }} ({{ self::format_date(event.date) }})</a>
       </li>
       <li>{{ section.name }}</li>
     </ul>
@@ -30,7 +30,7 @@
   <dl class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
     <div>
       <dt>Holes</dt>
-      <dd>{{self::num_holes(group)}}</dd>
+      <dd></dd>
     </div>
 
     <div>
@@ -72,11 +72,44 @@
       <tr>
         <th>{{ entry.index }}</th>
         <td>{{ entry.person_name }}</td>
-        <td>{{ entry.handicap }}</td>
-        <td>{{ entry.membership_number }}</td>
+        <td>
+          {% if let Some(handicap) = entry.handicap %}
+          {{ handicap }}
+          {% endif %}
+        </td>
+        <td>
+          {% if let Some(membership_number) = entry.membership_number %}
+          {{ membership_number }}
+          {% endif %}
+        </td>
+
+        <td>
+          {% if let Some(golf_link_no) = entry.golf_link_no %}
+          {{ golf_link_no }}
+          {% endif %}
+        </td>
+      </tr>
+
+      {% endfor %}
+      {# 
+      {% for entry in group.booking_entries.entries %}
+      <tr>
+        <th>{{ entry.index }}</th>
+        <td>{{ entry.person_name }}</td>
+        <td>
+          {% if let Some(entry.handicap) = handicap %}
+          {{ handicap }}
+          {% endif %}
+        </td>
+        <td>
+          {% if let Some(entry.membership_number) = membership_number %}
+          {{ membership_number }}
+          {% endif %}
+        </td>
         <td>{{ entry.golf_link_no }}</td>
       </tr>
       {% endfor %}
+      #}
     </tbody>
   </table>
 </section>
