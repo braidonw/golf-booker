@@ -11,7 +11,7 @@ use axum_login::{
     tower_sessions::{Expiry, MemoryStore, SessionManagerLayer},
     AuthManagerLayerBuilder,
 };
-use sqlx::SqlitePool;
+use sqlx::{sqlite::SqliteConnectOptions, SqlitePool};
 use std::net::SocketAddr;
 use std::sync::Arc;
 use time::Duration;
@@ -30,8 +30,12 @@ pub struct AppState {
 
 impl App {
     pub async fn new() -> Result<Self, Box<dyn std::error::Error>> {
+        // Init and seed db
         let db_filename = "golf.db";
-        let db = SqlitePool::connect(db_filename).await?;
+        let db_options = SqliteConnectOptions::new()
+            .filename(db_filename)
+            .create_if_missing(true);
+        let db = SqlitePool::connect_with(db_options).await?;
         sqlx::migrate!().run(&db).await?;
 
         // If no users exist, seed from environment

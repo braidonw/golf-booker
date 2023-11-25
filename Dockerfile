@@ -17,5 +17,13 @@ RUN cargo build --release --bin axum-booker
 # We do not need the Rust toolchain to run the binary!
 FROM debian:bookworm-slim AS runtime
 WORKDIR /app
+RUN apt-get update -y \
+  && apt-get install -y --no-install-recommends openssl ca-certificates \
+  # Clean up
+  && apt-get autoremove -y \
+  && apt-get clean -y \
+  && rm -rf /var/lib/apt/lists/*
+
 COPY --from=builder /app/target/release/axum-booker /usr/local/bin
+COPY /assets/styles.css /app/assets/styles.css
 ENTRYPOINT ["/usr/local/bin/axum-booker"]
