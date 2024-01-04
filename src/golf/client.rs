@@ -109,8 +109,6 @@ mod booking {
         action: String,
         #[serde(rename = "rowId")]
         row_id: u32,
-        #[serde(rename = "xIndex")]
-        index: String,
         #[serde(rename = "memberId")]
         member_id: String,
         #[serde(rename = "myGroup")]
@@ -126,7 +124,6 @@ mod booking {
             Self {
                 action: "makeBooking".to_string(),
                 row_id,
-                index: "1".to_string(),
                 member_id,
                 my_group: true,
                 find_alternative: false,
