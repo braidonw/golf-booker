@@ -121,7 +121,7 @@ mod booking {
 
     impl BookingParams {
         fn new(row_id: u32) -> Self {
-            let member_id = std::env::var("NSWGC_MEMBER_ID").expect("NSWGC_MEMBER_ID not set");
+            let member_id = std::env::var("GC_MEMBER_ID").expect("GC_MEMBER_ID not set");
 
             Self {
                 action: "makeBooking".to_string(),
